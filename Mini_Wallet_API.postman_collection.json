@@ -1,0 +1,282 @@
+{
+  "info": {
+    "_postman_id": "8f3b2e7a-9a1c-4b6d-a123-miniwallet999",
+    "name": "Mini Wallet API - backend-debit",
+    "description": "Koleksi Postman resmi untuk pengujian API Mini Wallet (Express.js + MySQL + JWT). Mencakup Authentication (Register & Login), Wallet (Saldo), Top-up, Transfer (Success & Error handling), serta Riwayat Transaksi. Token JWT otomatis tersimpan ke variabel koleksi saat login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"johndoe@gmail.com\",\n  \"phone\": \"081234567899\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            },
+            "description": "Mendaftarkan pengguna baru ke database MySQL mini_wallet. Password minimal 8 karakter."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "    console.log('Token JWT otomatis tersimpan:', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nathan@gmail.com\",\n  \"password\": \"dummy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Melakukan login dengan Email atau Username. Script Test akan secara otomatis mengekstrak JWT token dan menyimpannya ke variabel collection {{token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Gagal (Password Salah)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nathan@gmail.com\",\n  \"password\": \"passwordsalah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Pengujian login dengan kredensial salah (harus mengembalikan HTTP 401)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Wallet & Saldo",
+      "item": [
+        {
+          "name": "Get Wallet (Informasi Saldo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallet"]
+            },
+            "description": "Mengambil detail profil akun yang sedang login beserta jumlah saldo aktual."
+          },
+          "response": []
+        },
+        {
+          "name": "Top-up Saldo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/topup",
+              "host": ["{{baseUrl}}"],
+              "path": ["topup"]
+            },
+            "description": "Menambahkan saldo ke akun dompet. Nominal harus berupa angka dan > 0."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Transfer Dana",
+      "item": [
+        {
+          "name": "Transfer Saldo (Success)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiver\": \"budi\",\n  \"amount\": 25000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"]
+            },
+            "description": "Mengirim saldo ke pengguna lain. Parameter receiver dapat berupa username ('budi'), email ('budi@gmail.com'), atau nomor HP."
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Gagal (Saldo Tidak Cukup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiver\": \"budi\",\n  \"amount\": 9000000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"]
+            },
+            "description": "Pengujian transfer dengan nominal yang melebihi saldo pengirim (harus mengembalikan HTTP 400 'Saldo tidak mencukupi.')."
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Gagal (Penerima Tidak Ditemukan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiver\": \"usernametidakada999\",\n  \"amount\": 10000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"]
+            },
+            "description": "Pengujian transfer ke pengguna yang tidak terdaftar (harus mengembalikan HTTP 400 'User penerima tidak ditemukan.')."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Riwayat Transaksi",
+      "item": [
+        {
+          "name": "Get Transactions (Riwayat Mutasi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions"]
+            },
+            "description": "Mengambil seluruh riwayat mutasi transaksi (Top-up dan Transfer, baik masuk maupun keluar) yang berelasi dengan pengguna."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
